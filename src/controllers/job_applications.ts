@@ -7,6 +7,11 @@ import {
   getApplications,
   updateApplicationById,
 } from "../db/applications";
+import { getUserBySessionToken } from "../db/users";
+import jwt from "jsonwebtoken";
+
+const COOKIE_VARIABLE = process.env.COOKIE_VARIABLE;
+const JWT_SECRET = process.env.JWT_SECRET || "job-application-jwt-secret";
 
 // for creating new application
 export const createNewJobApplication = async (
@@ -29,16 +34,38 @@ export const createNewJobApplication = async (
       return response.sendStatus(403);
     }
 
+    // get user by cookies
+    let userId;
+    const sessionToken = request.cookies[COOKIE_VARIABLE];
+    jwt.verify(
+      sessionToken,
+      JWT_SECRET,
+      (error: Error, user: { id: string; mail: string }) => {
+        if (error) {
+          return response.sendStatus(401).json({ message: "Unauthorized" });
+        } else {
+          userId = user.id;
+        }
+      }
+    );
+    // const user = await getUserBySessionToken(sessionToken);
+    // if (!user) {
+    //   return response.sendStatus(401).json({ message: "Unauthorized" }); //401 Unauthorized
+    // }
+
     // create new application
-    const newApplication = await createApplication({
-      company,
-      role,
-      jobType,
-      location,
-      date,
-      status,
-      note,
-    });
+    const newApplication = await createApplication(
+      {
+        company,
+        role,
+        jobType,
+        location,
+        date,
+        status,
+        note,
+      },
+      userId as mongoose.Types.ObjectId
+    );
 
     return response.status(200).json(newApplication).end();
   } catch (error) {
@@ -66,7 +93,28 @@ export const fetchAllApplication = async (
   response: express.Response
 ) => {
   try {
-    const applications = await getApplications();
+    // get user by cookies
+    let userId;
+    const sessionToken = request.cookies[COOKIE_VARIABLE];
+    jwt.verify(
+      sessionToken,
+      JWT_SECRET,
+      (error: Error, user: { id: string; mail: string }) => {
+        if (error) {
+          return response.sendStatus(401).json({ message: "Unauthorized" });
+        } else {
+          userId = user.id;
+        }
+      }
+    );
+    // get user by cookies
+    // const user = await getUserBySessionToken(sessionToken);
+    // if (!user) {
+    //   return response.sendStatus(401).json({ message: "Unauthorized" }); //401 Unauthorized
+    // }
+    const applications = await getApplications(
+      userId as mongoose.Types.ObjectId
+    );
     return response.status(200).json(applications).end();
   } catch (error) {
     return response.sendStatus(400);

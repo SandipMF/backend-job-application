@@ -9,6 +9,7 @@ const JobApplicationSchema = new mongoose.Schema({
   date: { type: String, require: true },
   status: { type: String, require: true },
   note: { type: String, require: false },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", require: true },
 });
 
 // Application Model
@@ -18,13 +19,17 @@ export const JobApplicationModel = mongoose.model(
 );
 
 // for CREATE operation to db
-export const createApplication = (values: Record<string, unknown>) =>
-  new JobApplicationModel(values)
+export const createApplication = (
+  values: Record<string, unknown>,
+  userId: mongoose.Types.ObjectId
+) =>
+  new JobApplicationModel({ ...values, userId })
     .save()
     .then((application) => application.toObject());
 
 // For FETCH operation from db
-export const getApplications = () => JobApplicationModel.find();
+export const getApplications = (userId: mongoose.Types.ObjectId) =>
+  JobApplicationModel.find({ userId });
 
 // For FETCH operation by id from db
 export const getApplicationById = (id: string) =>

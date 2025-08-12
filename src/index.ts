@@ -11,7 +11,13 @@ import router from "./router";
 dotenv.config();
 
 const app = express();
-app.use(cors({ credentials: true }));
+const allowedOrigins = ["http://localhost:5173", "http://localhost:8081"];
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+); //note: check details
 app.use(compression());
 app.use(cookieParser());
 app.use(bodyParser.json());
